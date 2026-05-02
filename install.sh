@@ -2,9 +2,9 @@
 #
 # install.sh — Install shared-llm-tools into global ~/.cursor
 #
-# This script symlinks commands and skills from this repo into
-# ~/.cursor/commands/ and ~/.cursor/skills/ so they are available
-# as global Cursor slash-commands and skills across all projects.
+# This script symlinks commands, skills, and rules from this repo
+# into ~/.cursor/commands/, ~/.cursor/skills/, and ~/.cursor/rules/
+# so they are available globally in Cursor across all projects.
 #
 # Usage:
 #   ./install.sh           # install (symlink) everything
@@ -20,9 +20,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CURSOR_DIR="${HOME}/.cursor"
 CURSOR_COMMANDS_DIR="${CURSOR_DIR}/commands"
 CURSOR_SKILLS_DIR="${CURSOR_DIR}/skills"
+CURSOR_RULES_DIR="${CURSOR_DIR}/rules"
 
 SRC_COMMANDS_DIR="${SCRIPT_DIR}/commands"
 SRC_SKILLS_DIR="${SCRIPT_DIR}/skills"
+SRC_RULES_DIR="${SCRIPT_DIR}/rules"
 
 # ── Colors ─────────────────────────────────────────────────────
 GREEN='\033[0;32m'
@@ -75,6 +77,21 @@ uninstall() {
         done
     fi
 
+    # Remove rule symlinks
+    if [[ -d "$SRC_RULES_DIR" ]]; then
+        for file in "$SRC_RULES_DIR"/*; do
+            [[ -f "$file" ]] || continue
+            local name
+            name="$(basename "$file")"
+            local target="${CURSOR_RULES_DIR}/${name}"
+            if [[ -L "$target" ]]; then
+                rm "$target"
+                success "Removed rule:    ${name}"
+                ((removed++))
+            fi
+        done
+    fi
+
     if [[ $removed -eq 0 ]]; then
         info "Nothing to remove — no symlinks found."
     else
@@ -94,6 +111,7 @@ install() {
     # Ensure target directories exist
     mkdir -p "$CURSOR_COMMANDS_DIR"
     mkdir -p "$CURSOR_SKILLS_DIR"
+    mkdir -p "$CURSOR_RULES_DIR"
 
     local installed=0
     local skipped=0
@@ -170,6 +188,43 @@ install() {
         warn "No skills/ directory found — skipping skills."
     fi
 
+    echo
+
+    # ── Symlink rules ──────────────────────────────────────────
+    if [[ -d "$SRC_RULES_DIR" ]]; then
+        info "Installing rules..."
+        for file in "$SRC_RULES_DIR"/*; do
+            [[ -f "$file" ]] || continue
+            local name
+            name="$(basename "$file")"
+            local target="${CURSOR_RULES_DIR}/${name}"
+
+            if [[ -L "$target" ]]; then
+                local existing_src
+                existing_src="$(readlink "$target")"
+                if [[ "$existing_src" == "$file" ]]; then
+                    warn "Already linked: ${name} (skipped)"
+                    ((skipped++))
+                    continue
+                else
+                    warn "Replacing existing symlink: ${name}"
+                    rm "$target"
+                fi
+            elif [[ -e "$target" ]]; then
+                warn "File already exists (not a symlink): ${name} — skipping"
+                warn "  Remove it manually if you want to replace: ${target}"
+                ((skipped++))
+                continue
+            fi
+
+            ln -s "$file" "$target"
+            success "Linked rule:     ${name}"
+            ((installed++))
+        done
+    else
+        warn "No rules/ directory found — skipping rules."
+    fi
+
     # ── Summary ────────────────────────────────────────────────
     echo
     echo -e "${BOLD}────────────────────────────────────────${NC}"
@@ -177,6 +232,7 @@ install() {
     echo
     info "Commands → ${CYAN}${CURSOR_COMMANDS_DIR}${NC}"
     info "Skills   → ${CYAN}${CURSOR_SKILLS_DIR}${NC}"
+    info "Rules    → ${CYAN}${CURSOR_RULES_DIR}${NC}"
     echo
     info "Symlinks point back to this repo — ${GREEN}git pull${NC} to update."
     echo -e "${BOLD}────────────────────────────────────────${NC}"
@@ -191,7 +247,7 @@ case "${1:-}" in
     --help | -h)
         echo "Usage: $0 [--uninstall]"
         echo
-        echo "  (no args)     Install (symlink) commands & skills into ~/.cursor"
+        echo "  (no args)     Install (symlink) commands, skills & rules into ~/.cursor"
         echo "  --uninstall   Remove symlinks created by this script"
         echo "  --help        Show this help"
         ;;
