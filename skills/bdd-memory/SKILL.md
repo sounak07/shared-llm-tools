@@ -1,80 +1,44 @@
-# Skill: bdd_memory_manager
+---
+name: bdd-memory-manager
+description: Maintain system behavior as structured BDD memory using `.feature` files. Ensures every meaningful behavioral change is captured, deduplicated, and stored for retrieval and reasoning.
+license: MIT
+---
 
-## Purpose
-Maintain system behavior as structured BDD memory using `.feature` files.
+# BDD Memory Manager
 
-This skill ensures that every meaningful code or logic change is reflected in `/docs/bdd/features/*.feature`.
+Maintain system behavior as structured `.feature` files under `/docs/bdd/features/`.  
+These files act as the **source of truth for system behavior** and a **memory layer for the agent**.
+
+**Tradeoff:** This enforces discipline and consistency over speed. For trivial or non-behavioral changes, use judgment.
 
 ---
 
-## When to Trigger
+## 1. Think Before Writing Scenarios
 
-Invoke this skill when ANY of the following occur:
+**Don't assume behavior. Derive it. Surface ambiguity.**
 
-- New feature is implemented
-- Existing business logic is modified
-- API behavior changes
-- Bug fix alters system behavior
-- Retry / validation / edge case logic is added
+Before updating any `.feature` file:
 
-If unsure → TRIGGER the skill
+- Identify what behavior actually changed (not just code changes)
+- State assumptions if behavior is unclear
+- If multiple interpretations exist, DO NOT pick one silently
+- If behavior is ambiguous → ask or skip
 
----
+Ask yourself:
+- Is this user-visible or system-observable behavior?
+- Is this already captured in an existing scenario?
 
-## When NOT to Trigger
-
-Do NOT run for:
-
-- Pure refactoring with no behavior change
-- Formatting or lint-only changes
-- Dependency/version updates
-- Comments or documentation-only changes (unless behavior described changes)
+If unclear → STOP
 
 ---
 
-## Objective
+## 2. Simplicity First
 
-Update or create `.feature` files so they always represent the **latest system behavior**.
+**Capture the minimum behavior needed. No speculation.**
 
----
+- Do NOT invent flows not implied by the change
+- Do NOT generalize prematurely
+- Do NOT add "future-proof" scenarios
+- One scenario = one behavior
 
-## Execution Steps
-
-### Step 1: Identify Impacted Feature
-- Analyze code changes
-- Map them to a logical feature (e.g., auth, payments, search)
-
----
-
-### Step 2: Locate Feature File
-- Path: `/docs/bdd/features/<feature_name>.feature`
-- If file does not exist → CREATE it
-
----
-
-### Step 3: Extract Behavior Changes
-Translate code changes into:
-
-- User-visible behavior
-- System responses
-- Edge cases
-
----
-
-### Step 4: Check for Existing Scenarios
-- Perform semantic comparison with existing scenarios
-- If similar exists → UPDATE it
-- Else → ADD a new scenario
-
----
-
-### Step 5: Write Scenarios (STRICT FORMAT)
-
-```gherkin
-Feature: <Feature Name>
-
-  @tag1 @tag2
-  Scenario: <clear user behavior>
-    Given <specific context>
-    When <action>
-    Then <expected outcome>
+Bad:
