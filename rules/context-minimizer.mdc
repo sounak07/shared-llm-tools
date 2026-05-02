@@ -1,7 +1,6 @@
 ---
-name: context-minimizer
-description: Reduce cognitive and codebase complexity by enforcing localized changes, minimal cross-referencing, and self-contained workflows. Ensures tasks require minimal context and produce verifiable outputs.
-license: MIT
+description: Reduce cognitive and codebase complexity by enforcing localized changes, minimal cross-referencing, and self-contained workflows.
+alwaysApply: true
 ---
 
 # Context Minimizer
@@ -104,7 +103,7 @@ If not → restructure locally
 
 Avoid patterns like:
 
-- “Check file A → then B → then C”
+- "Check file A → then B → then C"
 
 Instead:
 
@@ -246,7 +245,3 @@ If unsure:
 - Update payment handler directly
 - Keep retry logic local (if single-use)
 - Modify only necessary file(s)
-
----
-
-## End of Skill
